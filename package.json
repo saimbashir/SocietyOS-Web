@@ -1,0 +1,58 @@
+{
+  "name": "societyos",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently -k \"npm:server\" \"npm:client\"",
+    "server": "node --watch backend/src/server.js",
+    "client": "vite --config frontend/vite.config.js",
+    "build": "vite build --config frontend/vite.config.js",
+    "start": "node backend/src/server.js",
+    "test": "vitest run",
+    "db:migrate": "node backend/src/migrate.js",
+    "db:seed": "node backend/src/seed.js",
+    "test:e2e": "playwright test",
+    "prisma:generate": "prisma generate --schema backend/prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.3.14",
+    "@prisma/client": "6.19.0",
+    "@supabase/supabase-js": "^2.57.4",
+    "@tanstack/react-query": "^5.90.2",
+    "@hookform/resolvers": "^5.2.2",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "jose": "^6.1.0",
+    "lucide-react": "^0.468.0",
+    "motion": "^12.23.24",
+    "multer": "^2.0.2",
+    "pdfkit": "^0.17.2",
+    "qrcode": "^1.5.4",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-hook-form": "^7.63.0",
+    "react-router-dom": "^7.9.3",
+    "recharts": "^3.2.1",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@tailwindcss/vite": "^4.1.13",
+    "@vitejs/plugin-react": "^5.0.4",
+    "concurrently": "^9.2.1",
+    "prisma": "6.19.0",
+    "supertest": "^7.1.4",
+    "tailwindcss": "^4.1.13",
+    "vite": "^7.1.7",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,19 @@
+name: SocietyOS source checks
+on:
+  push:
+  pull_request:
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build frontend
+        run: npm run build
+      - name: Run backend tests
+        run: npm test

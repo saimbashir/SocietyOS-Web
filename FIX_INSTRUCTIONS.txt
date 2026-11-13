@@ -1,0 +1,12 @@
+SocietyOS LOCAL SIGNUP FIX
+
+Only backend/src/app.js and .env.example were changed. All GUI files are unchanged.
+
+1. Stop the existing SocietyOS server and Vite windows.
+2. Extract this ZIP to a folder.
+3. If you already have a working .env and data folder, copy both into the new societyos folder to retain settings and existing accounts.
+4. In your .env, set APP_ORIGIN=http://localhost:5173,http://127.0.0.1:5173 (no trailing slash). Keep AUTH_MODE=local.
+5. Run START.bat and open http://127.0.0.1:5173/signup.
+6. Account creation requires a running backend and initialized local database; follow START_HERE.txt if this is a fresh installation.
+
+Do not copy a previous node_modules folder. Production origin security remains strict.

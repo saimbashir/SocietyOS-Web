@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: societyos-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run prisma:generate
+    startCommand: npx prisma migrate deploy --schema backend/prisma/schema.prisma && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_MODE
+        value: supabase
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_ORIGIN
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: societyos-private
+      - key: CRON_SECRET
+        generateValue: true

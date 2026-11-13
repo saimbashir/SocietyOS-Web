@@ -1,0 +1,26 @@
+SOCIETYOS — QUICK START
+
+1. Install Node.js 22 LTS or newer.
+2. Extract the entire ZIP.
+3. Open the societyos folder and double-click START.bat on Windows.
+   On macOS/Linux/WSL: open a terminal in that folder and run:
+   node scripts/start.mjs
+4. Wait until both servers are ready, then open http://localhost:5173
+5. Select an account card, enter the password printed in the terminal,
+   and click Sign in securely.
+   The password is also in data/LOCAL_DEMO_LOGIN.txt after first startup.
+
+Keep the terminal open. First installation requires internet access.
+The local data is persistent: do not delete the data folder.
+There is no passwordless role login. All product pages require sign-in.
+
+The dark sidebar groups the main screens. More in the top bar opens
+related pages such as Buildings, Floors, Bookings and Payment review.
+Sign out is at the bottom of the sidebar.
+
+README.md: setup, stack and project overview.
+docs/USER_MANUAL.md: step-by-step workflows.
+docs/SCREEN_MAP.md: all 13 GUI references mapped to working routes.
+docs/DEPLOYMENT.md: setup for your own hosting and Supabase accounts.
+docs/FEATURE_CHECKLIST.md: implemented features and remaining refinements.
+docs/TEST_REPORT.md: tests and verification boundaries.

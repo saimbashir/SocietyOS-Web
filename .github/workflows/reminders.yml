@@ -1,0 +1,17 @@
+name: Daily community reminders
+on:
+  workflow_dispatch:
+  # Enable schedule only after configuring SOCIETYOS_API_URL and SOCIETYOS_CRON_SECRET.
+  # schedule:
+  #   - cron: '0 3 * * *'
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger idempotent reminders
+        env:
+          API_URL: ${{ secrets.SOCIETYOS_API_URL }}
+          CRON_SECRET: ${{ secrets.SOCIETYOS_CRON_SECRET }}
+        run: |
+          test -n "$API_URL" && test -n "$CRON_SECRET"
+          curl --fail --retry 2 --max-time 120 -X POST "$API_URL/api/jobs/reminders" -H "Authorization: Bearer $CRON_SECRET"

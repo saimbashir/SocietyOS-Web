@@ -1,0 +1,5754 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SocietyOS API",
+    "version": "1.0.0",
+    "description": "Express API. Local HttpOnly session cookies or Supabase bearer tokens; X-Society-Id selects a membership. Table visibility and actions are role-scoped."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000/api"
+    }
+  ],
+  "security": [
+    {
+      "session": []
+    },
+    {
+      "bearer": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session"
+      },
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "society": {
+        "name": "X-Society-Id",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "schemas": {
+      "emergency_contacts": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "phone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          }
+        },
+        "required": [
+          "name",
+          "phone",
+          "description"
+        ],
+        "additionalProperties": false
+      },
+      "shifts": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": [
+          "user_id",
+          "title",
+          "starts_at",
+          "ends_at"
+        ],
+        "additionalProperties": false
+      },
+      "buildings": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "Apartment",
+              "Houses"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "floors": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "building_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          }
+        },
+        "required": [
+          "building_id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "units": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "building_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "floor_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          }
+        },
+        "required": [
+          "building_id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "unit_occupancies": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "unit_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "tenant"
+            ]
+          }
+        },
+        "required": [
+          "unit_id",
+          "user_id",
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "visitor_passes": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "unit_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "vehicle": {
+            "type": "string",
+            "maxLength": 60
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "allowed_entries": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          }
+        },
+        "required": [
+          "unit_id",
+          "name",
+          "purpose",
+          "starts_at",
+          "ends_at",
+          "allowed_entries"
+        ],
+        "additionalProperties": false
+      },
+      "complaints": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "unit_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Plumbing",
+              "Electrical",
+              "Water",
+              "Cleaning",
+              "Parking",
+              "Elevator",
+              "Security",
+              "Internet",
+              "General maintenance",
+              "Other"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "normal",
+              "high",
+              "urgent"
+            ]
+          }
+        },
+        "required": [
+          "unit_id",
+          "title",
+          "description",
+          "category",
+          "priority"
+        ],
+        "additionalProperties": false
+      },
+      "invoices": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "unit_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "amount_cents": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000000
+          },
+          "due_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": [
+          "unit_id",
+          "title",
+          "amount_cents",
+          "due_at"
+        ],
+        "additionalProperties": false
+      },
+      "facilities": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "fee_cents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000000
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "capacity",
+          "fee_cents"
+        ],
+        "additionalProperties": false
+      },
+      "facility_bookings": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "facility_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": [
+          "facility_id",
+          "title",
+          "starts_at",
+          "ends_at"
+        ],
+        "additionalProperties": false
+      },
+      "announcements": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "important",
+              "emergency"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "body",
+          "priority"
+        ],
+        "additionalProperties": false
+      },
+      "community_events": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "location": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "starts_at",
+          "location"
+        ],
+        "additionalProperties": false
+      },
+      "feedback": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          }
+        },
+        "required": [
+          "title",
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "lost_found_reports": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "lost",
+              "found"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "security_incidents": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "high",
+              "urgent"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "priority"
+        ],
+        "additionalProperties": false
+      },
+      "support_requests": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          }
+        },
+        "required": [
+          "title",
+          "body"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "paths": {
+    "/emergency_contacts": {
+      "get": {
+        "summary": "List emergency_contacts",
+        "description": "Visible to admin, resident, guard, maintenance. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create emergency_contacts",
+        "description": "Allowed roles: admin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/emergency_contacts"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/emergency_contacts/export": {
+      "get": {
+        "summary": "Export role-visible emergency_contacts as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/shifts": {
+      "get": {
+        "summary": "List shifts",
+        "description": "Visible to admin, guard, maintenance. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create shifts",
+        "description": "Allowed roles: admin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/shifts"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/shifts/export": {
+      "get": {
+        "summary": "Export role-visible shifts as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/buildings": {
+      "get": {
+        "summary": "List buildings",
+        "description": "Visible to admin, resident, guard, maintenance. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create buildings",
+        "description": "Allowed roles: admin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/buildings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/buildings/export": {
+      "get": {
+        "summary": "Export role-visible buildings as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/floors": {
+      "get": {
+        "summary": "List floors",
+        "description": "Visible to admin, resident, guard, maintenance. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create floors",
+        "description": "Allowed roles: admin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/floors"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/floors/export": {
+      "get": {
+        "summary": "Export role-visible floors as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/units": {
+      "get": {
+        "summary": "List units",
+        "description": "Visible to admin, resident, guard, maintenance. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create units",
+        "description": "Allowed roles: admin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/units"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/units/export": {
+      "get": {
+        "summary": "Export role-visible units as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/unit_occupancies": {
+      "get": {
+        "summary": "List unit_occupancies",
+        "description": "Visible to admin, resident. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create unit_occupancies",
+        "description": "Allowed roles: admin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/unit_occupancies"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/unit_occupancies/export": {
+      "get": {
+        "summary": "Export role-visible unit_occupancies as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/visitor_passes": {
+      "get": {
+        "summary": "List visitor_passes",
+        "description": "Visible to admin, resident, guard. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create visitor_passes",
+        "description": "Allowed roles: admin, resident, guard",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/visitor_passes"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/visitor_passes/export": {
+      "get": {
+        "summary": "Export role-visible visitor_passes as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/visitor_entries": {
+      "get": {
+        "summary": "List visitor_entries",
+        "description": "Visible to admin, resident, guard. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/visitor_entries/export": {
+      "get": {
+        "summary": "Export role-visible visitor_entries as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/complaints": {
+      "get": {
+        "summary": "List complaints",
+        "description": "Visible to admin, resident, maintenance. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create complaints",
+        "description": "Allowed roles: admin, resident",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/complaints"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/complaints/export": {
+      "get": {
+        "summary": "Export role-visible complaints as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/invoices": {
+      "get": {
+        "summary": "List invoices",
+        "description": "Visible to admin, resident. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create invoices",
+        "description": "Allowed roles: admin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/invoices"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/invoices/export": {
+      "get": {
+        "summary": "Export role-visible invoices as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/payments": {
+      "get": {
+        "summary": "List payments",
+        "description": "Visible to admin, resident. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/payments/export": {
+      "get": {
+        "summary": "Export role-visible payments as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/facilities": {
+      "get": {
+        "summary": "List facilities",
+        "description": "Visible to admin, resident. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create facilities",
+        "description": "Allowed roles: admin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/facilities"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/facilities/export": {
+      "get": {
+        "summary": "Export role-visible facilities as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/facility_bookings": {
+      "get": {
+        "summary": "List facility_bookings",
+        "description": "Visible to admin, resident. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create facility_bookings",
+        "description": "Allowed roles: admin, resident",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/facility_bookings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/facility_bookings/export": {
+      "get": {
+        "summary": "Export role-visible facility_bookings as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/announcements": {
+      "get": {
+        "summary": "List announcements",
+        "description": "Visible to admin, resident, guard, maintenance. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create announcements",
+        "description": "Allowed roles: admin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/announcements"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/announcements/export": {
+      "get": {
+        "summary": "Export role-visible announcements as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/community_events": {
+      "get": {
+        "summary": "List community_events",
+        "description": "Visible to admin, resident, guard, maintenance. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create community_events",
+        "description": "Allowed roles: admin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/community_events"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/community_events/export": {
+      "get": {
+        "summary": "Export role-visible community_events as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/feedback": {
+      "get": {
+        "summary": "List feedback",
+        "description": "Visible to admin, resident. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create feedback",
+        "description": "Allowed roles: admin, resident",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/feedback"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/feedback/export": {
+      "get": {
+        "summary": "Export role-visible feedback as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/lost_found_reports": {
+      "get": {
+        "summary": "List lost_found_reports",
+        "description": "Visible to admin, resident, guard, maintenance. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create lost_found_reports",
+        "description": "Allowed roles: admin, resident",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/lost_found_reports"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/lost_found_reports/export": {
+      "get": {
+        "summary": "Export role-visible lost_found_reports as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/security_incidents": {
+      "get": {
+        "summary": "List security_incidents",
+        "description": "Visible to admin, guard. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create security_incidents",
+        "description": "Allowed roles: admin, guard",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/security_incidents"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/security_incidents/export": {
+      "get": {
+        "summary": "Export role-visible security_incidents as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/support_requests": {
+      "get": {
+        "summary": "List support_requests",
+        "description": "Visible to admin, resident, guard, maintenance. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create support_requests",
+        "description": "Allowed roles: admin, resident, guard, maintenance",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/support_requests"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/support_requests/export": {
+      "get": {
+        "summary": "Export role-visible support_requests as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/documents": {
+      "get": {
+        "summary": "List documents",
+        "description": "Visible to admin, resident, guard, maintenance. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/documents/export": {
+      "get": {
+        "summary": "Export role-visible documents as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/polls": {
+      "get": {
+        "summary": "List polls",
+        "description": "Visible to admin, resident. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create poll",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "ends_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "options": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 2,
+                    "maxItems": 8
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/polls/export": {
+      "get": {
+        "summary": "Export role-visible polls as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "summary": "List notifications",
+        "description": "Visible to admin, resident, guard, maintenance. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/notifications/export": {
+      "get": {
+        "summary": "Export role-visible notifications as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/audit_logs": {
+      "get": {
+        "summary": "List audit_logs",
+        "description": "Visible to admin. Newest 500 records; resident and assigned-staff restrictions apply.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/audit_logs/export": {
+      "get": {
+        "summary": "Export role-visible audit_logs as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Database health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/auth/config": {
+      "get": {
+        "summary": "Authentication provider configuration",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Current user and memberships",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Local password login",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/signup": {
+      "post": {
+        "summary": "Local signup and society",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 10
+                  },
+                  "society": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Revoke local session",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/onboard": {
+      "post": {
+        "summary": "Create a society",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "plan": {
+                    "enum": [
+                      "starter",
+                      "community",
+                      "estate"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/join": {
+      "post": {
+        "summary": "Accept invitation",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 64,
+                    "maxLength": 64
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/profile": {
+      "patch": {
+        "summary": "Update own name",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/preferences": {
+      "get": {
+        "summary": "Get notification preferences",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update notification preferences",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "updates": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invitations": {
+      "post": {
+        "summary": "Create invitation",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "role": {
+                    "enum": [
+                      "admin",
+                      "resident",
+                      "guard",
+                      "maintenance"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/members": {
+      "get": {
+        "summary": "Society directory",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/members/{id}": {
+      "patch": {
+        "summary": "Update society role",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "enum": [
+                      "admin",
+                      "resident",
+                      "guard",
+                      "maintenance"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove society membership",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/staff": {
+      "get": {
+        "summary": "Maintenance staff",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/settings": {
+      "get": {
+        "summary": "Society configuration",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update society",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "plan": {
+                    "enum": [
+                      "starter",
+                      "community",
+                      "estate"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics": {
+      "get": {
+        "summary": "Role-specific overview aggregates",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/reports": {
+      "get": {
+        "summary": "Admin aggregates; optional from/to ISO date query",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/reminders": {
+      "post": {
+        "summary": "Run society reminders",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/reminders": {
+      "post": {
+        "summary": "CRON_SECRET bearer authentication; all society reminders",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/visitors/verify": {
+      "post": {
+        "summary": "Check visitor in or out",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "exit": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{id}/payments": {
+      "post": {
+        "summary": "Submit manual payment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount_cents": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "reference": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{id}/pdf": {
+      "get": {
+        "summary": "Download invoice PDF",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/billing/monthly": {
+      "post": {
+        "summary": "Monthly occupied-unit invoice batch",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "period": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "amount_cents": {
+                    "type": "integer"
+                  },
+                  "extra_cents": {
+                    "type": "integer"
+                  },
+                  "due_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/polls/{id}/results": {
+      "get": {
+        "summary": "Poll options and aggregate results",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/polls/{id}/vote": {
+      "post": {
+        "summary": "Vote once",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "option_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/platform": {
+      "get": {
+        "summary": "Superadmin platform overview",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/platform/{id}": {
+      "post": {
+        "summary": "Superadmin change society access",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "active",
+                      "pending",
+                      "suspended"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/units/import": {
+      "post": {
+        "summary": "Import up to 200 units; per-row result",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "rows": {
+                    "type": "array",
+                    "maxItems": 200,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "building_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "floor_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complaints/{id}/comments": {
+      "get": {
+        "summary": "Read visible complaint conversation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/files/{id}": {
+      "get": {
+        "summary": "Download a protected file",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/society"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/complaints/{id}/assign": {
+      "post": {
+        "summary": "assign complaints",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "assigned_to": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complaints/{id}/start": {
+      "post": {
+        "summary": "start complaints",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complaints/{id}/resolve": {
+      "post": {
+        "summary": "resolve complaints",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complaints/{id}/close": {
+      "post": {
+        "summary": "close complaints",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complaints/{id}/reopen": {
+      "post": {
+        "summary": "reopen complaints",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complaints/{id}/comment": {
+      "post": {
+        "summary": "comment complaints",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{id}/approve": {
+      "post": {
+        "summary": "approve payments",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{id}/reject": {
+      "post": {
+        "summary": "reject payments",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/facility_bookings/{id}/approve": {
+      "post": {
+        "summary": "approve facility_bookings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/facility_bookings/{id}/reject": {
+      "post": {
+        "summary": "reject facility_bookings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/facility_bookings/{id}/cancel": {
+      "post": {
+        "summary": "cancel facility_bookings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/{id}/read": {
+      "post": {
+        "summary": "read notifications",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/visitor_passes/{id}/cancel": {
+      "post": {
+        "summary": "cancel visitor_passes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/feedback/{id}/close": {
+      "post": {
+        "summary": "close feedback",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lost_found_reports/{id}/close": {
+      "post": {
+        "summary": "close lost_found_reports",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/security_incidents/{id}/close": {
+      "post": {
+        "summary": "close security_incidents",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/support_requests/{id}/close": {
+      "post": {
+        "summary": "close support_requests",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/society"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/buildings/{id}": {
+      "patch": {
+        "summary": "Administrator edit buildings",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/buildings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove unreferenced buildings",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/floors/{id}": {
+      "patch": {
+        "summary": "Administrator edit floors",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/floors"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove unreferenced floors",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/units/{id}": {
+      "patch": {
+        "summary": "Administrator edit units",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/units"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove unreferenced units",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/facilities/{id}": {
+      "patch": {
+        "summary": "Administrator edit facilities",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/facilities"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove unreferenced facilities",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/announcements/{id}": {
+      "patch": {
+        "summary": "Administrator edit announcements",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/announcements"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/community_events/{id}": {
+      "patch": {
+        "summary": "Administrator edit community_events",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/community_events"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove unreferenced community_events",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/emergency_contacts/{id}": {
+      "patch": {
+        "summary": "Administrator edit emergency_contacts",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/emergency_contacts"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove unreferenced emergency_contacts",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/shifts/{id}": {
+      "patch": {
+        "summary": "Administrator edit shifts",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/shifts"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove unreferenced shifts",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/unit_occupancies/{id}": {
+      "delete": {
+        "summary": "Remove unreferenced unit_occupancies",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/files": {
+      "post": {
+        "summary": "Upload protected PDF, PNG or JPEG (5 MB maximum)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "title"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "entity_type": {
+                    "enum": [
+                      "community",
+                      "complaint",
+                      "payment"
+                    ]
+                  },
+                  "entity_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "summary": "Search role-visible tenant records",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    },
+    "/summary/{table}": {
+      "get": {
+        "summary": "Role-scoped summary card values",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Role or tenant denied"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict or invalid state"
+          }
+        }
+      }
+    }
+  }
+}

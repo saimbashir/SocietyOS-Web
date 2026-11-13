@@ -1,0 +1,427 @@
+// SQL-first Prisma schema. SQL migrations own tenant-aware foreign keys,
+// checks, partial indexes, RLS and booking triggers. Do not use db push.
+generator client {
+ provider = "prisma-client-js"
+}
+datasource db {
+ provider = "postgresql"
+ url = env("DATABASE_URL")
+}
+
+model Societies {
+ id String @id
+ name String 
+ address String @default("")
+ status String @default("active")
+ plan String @default("starter")
+ created_at DateTime? @db.Timestamptz @default(now())
+ @@map("societies")
+}
+
+model Users {
+ id String @id
+ name String 
+ email String @unique
+ password_hash String? 
+ platform_role String @default("user")
+ created_at DateTime? @db.Timestamptz @default(now())
+ @@map("users")
+}
+
+model Sessions {
+ token_hash String @id
+ user_id String? 
+ expires_at DateTime @db.Timestamptz
+ @@map("sessions")
+}
+
+model Profiles {
+ id String @id
+ phone String? @default("")
+ preferences Json @default("{}")
+ @@map("profiles")
+}
+
+model SocietyMemberships {
+ id String @id
+ society_id String? 
+ user_id String? 
+ role String 
+ created_at DateTime? @db.Timestamptz @default(now())
+ @@map("society_memberships")
+}
+
+model Buildings {
+ id String @id
+ society_id String 
+ name String 
+ kind String @default("Apartment")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("buildings")
+}
+
+model Floors {
+ id String @id
+ society_id String 
+ building_id String 
+ name String 
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("floors")
+}
+
+model Units {
+ id String @id
+ society_id String 
+ building_id String 
+ floor_id String? 
+ name String 
+ status String @default("vacant")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("units")
+}
+
+model UnitOccupancies {
+ id String @id
+ society_id String 
+ unit_id String 
+ user_id String? 
+ kind String @default("tenant")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("unit_occupancies")
+}
+
+model Invitations {
+ id String @id
+ society_id String 
+ email String 
+ role String 
+ token_hash String @unique
+ expires_at DateTime @db.Timestamptz
+ status String @default("pending")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("invitations")
+}
+
+model VisitorPasses {
+ id String @id
+ society_id String 
+ user_id String? 
+ unit_id String? 
+ name String 
+ purpose String 
+ vehicle String? @default("")
+ starts_at DateTime @db.Timestamptz
+ ends_at DateTime @db.Timestamptz
+ allowed_entries Int @default(1)
+ used_entries Int @default(0)
+ token_hash String @unique
+ status String @default("active")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("visitor_passes")
+}
+
+model VisitorEntries {
+ id String @id
+ society_id String 
+ pass_id String 
+ guard_id String? 
+ checked_in DateTime @db.Timestamptz @default(now())
+ checked_out DateTime? @db.Timestamptz
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("visitor_entries")
+}
+
+model Complaints {
+ id String @id
+ society_id String 
+ user_id String? 
+ unit_id String 
+ title String 
+ description String 
+ category String 
+ priority String @default("normal")
+ status String @default("open")
+ assigned_to String? 
+ due_at DateTime @db.Timestamptz @default(dbgenerated("now() + interval '3 days'"))
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("complaints")
+}
+
+model ComplaintComments {
+ id String @id
+ society_id String 
+ complaint_id String 
+ user_id String? 
+ body String 
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("complaint_comments")
+}
+
+model MaintenanceAssignments {
+ id String @id
+ society_id String 
+ complaint_id String 
+ user_id String? 
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("maintenance_assignments")
+}
+
+model MaintenanceUpdates {
+ id String @id
+ society_id String 
+ complaint_id String 
+ user_id String? 
+ body String 
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("maintenance_updates")
+}
+
+model Invoices {
+ billing_period String?
+ id String @id
+ society_id String 
+ unit_id String 
+ title String 
+ amount_cents Int 
+ paid_cents Int @default(0)
+ due_at DateTime @db.Timestamptz
+ status String @default("unpaid")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("invoices")
+}
+
+model InvoiceItems {
+ id String @id
+ society_id String 
+ invoice_id String 
+ title String 
+ amount_cents Int 
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("invoice_items")
+}
+
+model Payments {
+ id String @id
+ society_id String 
+ invoice_id String 
+ user_id String? 
+ amount_cents Int 
+ reference String 
+ status String @default("pending")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("payments")
+}
+
+model Facilities {
+ id String @id
+ society_id String 
+ name String 
+ description String 
+ capacity Int 
+ fee_cents Int @default(0)
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("facilities")
+}
+
+model FacilityBookings {
+ id String @id
+ society_id String 
+ facility_id String 
+ user_id String? 
+ title String 
+ starts_at DateTime @db.Timestamptz
+ ends_at DateTime @db.Timestamptz
+ status String @default("pending")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("facility_bookings")
+}
+
+model Announcements {
+ id String @id
+ society_id String 
+ user_id String? 
+ title String 
+ body String 
+ priority String @default("normal")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("announcements")
+}
+
+model AnnouncementReads {
+ id String @id
+ society_id String 
+ announcement_id String 
+ user_id String? 
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("announcement_reads")
+}
+
+model Notifications {
+ id String @id
+ society_id String 
+ user_id String? 
+ title String 
+ body String 
+ read_at DateTime? @db.Timestamptz
+ dedupe_key String? @unique
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("notifications")
+}
+
+model Documents {
+ id String @id
+ society_id String 
+ user_id String? 
+ title String 
+ storage_key String 
+ mime String 
+ bytes Int 
+ entity_type String @default("community")
+ entity_id String? 
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("documents")
+}
+
+model Polls {
+ id String @id
+ society_id String 
+ title String 
+ ends_at DateTime @db.Timestamptz
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("polls")
+}
+
+model PollOptions {
+ id String @id
+ society_id String 
+ poll_id String 
+ title String 
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("poll_options")
+}
+
+model PollVotes {
+ id String @id
+ society_id String 
+ poll_id String 
+ option_id String 
+ user_id String? 
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("poll_votes")
+}
+
+model AuditLogs {
+ id String @id
+ society_id String 
+ user_id String? 
+ action String 
+ entity_id String? 
+ details Json @default("{}")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("audit_logs")
+}
+
+model AutomationJobs {
+ id String @id
+ society_id String 
+ name String 
+ last_run DateTime? @db.Timestamptz
+ status String? @default("ready")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("automation_jobs")
+}
+
+model SecurityIncidents {
+ id String @id
+ society_id String 
+ user_id String? 
+ title String 
+ description String 
+ priority String @default("normal")
+ status String @default("open")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("security_incidents")
+}
+
+model CommunityEvents {
+ id String @id
+ society_id String 
+ title String 
+ description String 
+ starts_at DateTime @db.Timestamptz
+ location String 
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("community_events")
+}
+
+model Feedback {
+ id String @id
+ society_id String 
+ user_id String? 
+ title String 
+ body String 
+ status String @default("open")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("feedback")
+}
+
+model LostFoundReports {
+ id String @id
+ society_id String 
+ user_id String? 
+ title String 
+ description String 
+ kind String 
+ status String @default("open")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("lost_found_reports")
+}
+
+model SupportRequests {
+ id String @id
+ society_id String 
+ user_id String? 
+ title String 
+ body String 
+ status String @default("open")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("support_requests")
+}
+
+model SocietySubscriptions {
+ id String @id
+ society_id String 
+ plan String 
+ status String @default("active")
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("society_subscriptions")
+}
+
+model SubscriptionPlans {
+ id String @id
+ name String 
+ unit_limit Int 
+ monthly_cents Int @default(0)
+ @@map("subscription_plans")
+}
+
+model EmergencyContacts {
+ id String @id
+ society_id String 
+ name String 
+ phone String 
+ description String 
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("emergency_contacts")
+}
+
+model Shifts {
+ id String @id
+ society_id String 
+ user_id String 
+ title String 
+ starts_at DateTime @db.Timestamptz
+ ends_at DateTime @db.Timestamptz
+ created_at DateTime @db.Timestamptz @default(now())
+ @@map("shifts")
+}

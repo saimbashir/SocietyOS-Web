@@ -1,0 +1,16 @@
+node_modules/
+.env
+data/
+frontend/dist/
+playwright-report/
+test-results/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+.local/
+.npm/
